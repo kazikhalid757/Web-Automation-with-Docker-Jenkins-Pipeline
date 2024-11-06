@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "web_test_automation"
+        DOCKER_IMAGE = "repo-tester"
     }
 
     stages {
@@ -10,9 +10,9 @@ pipeline {
             steps {
                 echo 'Checking out the repository...'
                 checkout([$class: 'GitSCM',
-                          branches: [[name: 'dockerization']],
+                          branches: [[name: 'ARM64_Docker_Test']],
                           userRemoteConfigs: [[url: 'https://github.com/tamim61qups/Web_Test_Automation.git',
-                                               credentialsId: '2b8819c6-18c6-4e1d-8f34-ea45816260be']]])
+                                               credentialsId: '609e40f3-31e9-43d2-bcec-bf1ab12eb6ad']]])
             }
         }
 
@@ -21,7 +21,7 @@ pipeline {
                 echo 'Building the Docker image...'
                 script {
                     // Build the Docker image
-                    sh 'docker build -t ${DOCKER_IMAGE} .'
+                    sh 'docker build -t repo-tester .'
                 }
             }
         }
@@ -31,14 +31,13 @@ pipeline {
                 echo 'Running tests inside Docker container...'
                 script {
                     // Run Docker container to execute the tests
-                    sh "docker run --rm -v '${WORKSPACE}/allure-results:/usr/src/app/allure-results' ${DOCKER_IMAGE}"
+                    sh "docker run --rm -v '${WORKSPACE}/target/allure-results:/usr/src/app/target/allure-results' repo-tester"
                 }
             }
         }
 
-        stage('Publish Allure Reports') {
+        stage('Result') {
             steps {
-                echo 'Publishing Allure reports...'
                 allure includeProperties: false,
                        jdk: '',
                        results: [[path: 'build/allure-results']]

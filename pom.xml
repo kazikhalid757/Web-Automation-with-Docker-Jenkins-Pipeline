@@ -1,15 +1,13 @@
-<!-- Example pom.xml for a Maven project with Cucumber, TestNG, Selenium, and Allure -->
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Project coordinates -->
     <groupId>org.example</groupId>
     <artifactId>simple</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <!-- Properties -->
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
@@ -24,7 +22,6 @@
         <allure.maven.version>2.10.0</allure.maven.version>
     </properties>
 
-    <!-- Dependencies -->
     <dependencies>
         <!-- Cucumber dependencies -->
         <dependency>
@@ -118,21 +115,17 @@
         </dependency>
     </dependencies>
 
-    <!-- Build configuration -->
     <build>
         <plugins>
-            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven.compiler.plugin.version}</version>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
+                    <source>8</source>
+                    <target>8</target>
                 </configuration>
             </plugin>
-
-            <!-- Maven Surefire Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -152,7 +145,6 @@
                     </argLine>
                 </configuration>
                 <dependencies>
-                    <!-- AspectJ Weaver for Cucumber -->
                     <dependency>
                         <groupId>org.aspectj</groupId>
                         <artifactId>aspectjweaver</artifactId>
