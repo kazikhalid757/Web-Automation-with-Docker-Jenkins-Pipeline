@@ -1,0 +1,59 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out the repository...'
+                checkout([$class: 'GitSCM',
+                          branches: [[name: 'selenium_grid']],
+                          userRemoteConfigs: [[url: 'https://github.com/tamim61qups/Web_Test_Automation.git',
+                                               credentialsId: 'tamim61qups']]])
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building the Docker image...'
+                script {
+                    bat 'docker build -t web_test .'
+                }
+            }
+        }
+
+
+   stage('Run Tests on Selenium Grid') {
+            steps {
+                echo 'Running tests on Selenium Grid...'
+                script {
+                    bat """
+                        docker run --rm ^
+                        -v "%WORKSPACE%\\allure-results:/usr/src/app/allure-results" ^
+                        web_test
+                    """
+                }
+            }
+        }
+
+    }
+
+    post {
+        always {
+             echo 'Publishing Allure reports...'
+            allure includeProperties: false,
+                    jdk: '',
+                    results: [[path: 'build/allure-results']]
+                    
+            echo 'Cleaning up Docker resources...'
+            script {
+                bat "docker rmi web_test || exit 0"
+            }
+        }
+        success {
+            echo 'Build and tests completed successfully!'
+        }
+        failure {
+            echo 'Build or tests failed.'
+        }
+    }
+}
