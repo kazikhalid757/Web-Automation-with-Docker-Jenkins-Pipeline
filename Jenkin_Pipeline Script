@@ -1,0 +1,64 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "web_test_automation"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out the repository...'
+                checkout([$class: 'GitSCM',
+                          branches: [[name: 'dockerization']],
+                          userRemoteConfigs: [[url: 'https://github.com/tamim61qups/Web_Test_Automation.git',
+                                               credentialsId: '2b8819c6-18c6-4e1d-8f34-ea45816260be']]])
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building the Docker image...'
+                script {
+                    // Build the Docker image
+                    sh 'docker build -t ${DOCKER_IMAGE} .'
+                }
+            }
+        }
+
+        stage('Run Tests in Docker') {
+            steps {
+                echo 'Running tests inside Docker container...'
+                script {
+                    // Run Docker container to execute the tests
+                    sh "docker run --rm -v '${WORKSPACE}/allure-results:/usr/src/app/allure-results' ${DOCKER_IMAGE}"
+                }
+            }
+        }
+
+        stage('Publish Allure Reports') {
+            steps {
+                echo 'Publishing Allure reports...'
+                allure includeProperties: false,
+                       jdk: '',
+                       results: [[path: 'build/allure-results']]
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up Docker resources...'
+            script {
+                // Remove Docker image after execution
+                sh 'docker rmi repo-tester || true'
+            }
+        }
+        success {
+            echo 'Build and tests completed successfully!'
+        }
+        failure {
+            echo 'Build or tests failed.'
+        }
+    }
+}

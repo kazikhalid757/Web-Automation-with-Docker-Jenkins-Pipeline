@@ -1,0 +1,231 @@
+Here's the exact format of your Jenkins pipeline script without any changes:
+
+```groovy
+pipeline {
+
+    agent any
+
+    environment {
+
+        DOCKER_IMAGE = "web_test_automation"
+
+    }
+
+    stages {
+
+        stage('Checkout') {
+
+            steps {
+
+                echo 'Checking out the repository...'
+
+                checkout([$class: 'GitSCM',
+
+                          branches: [[name: 'main']],
+
+                          userRemoteConfigs: [[url: 'https://github.com/Jubear-Jabber-Jetu/Docker_Email_Send.git',
+
+                                               credentialsId: 'github']]])
+
+            }
+
+        }
+
+        stage('Build Docker Image') {
+
+            steps {
+
+                echo 'Building the Docker image...'
+
+                script {
+
+                    try {
+
+                        powershell '''
+
+                            docker build -t $Env:DOCKER_IMAGE .
+
+                        '''
+
+                    } catch (Exception e) {
+
+                        echo "Error building Docker image: ${e.message}"
+
+                        currentBuild.result = 'FAILURE'
+
+                        error "Stopping pipeline execution due to Docker build failure"
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        stage('Run Tests in Docker') {
+
+            steps {
+
+                echo 'Running tests inside Docker container...'
+
+                script {
+
+                    try {
+
+                        def result = powershell(script: '''
+
+                            docker run --rm $Env:DOCKER_IMAGE sh -c "mvn clean test || true"
+
+                        ''', returnStdout: true).trim()
+
+                        // Print the test result output
+
+                        echo "Test Results Output:\n${result}"
+
+                        // Parse the output to get the test counts
+
+                        def matcher = result =~ /Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+)/
+
+                        if (matcher) {
+
+                            def total = matcher[0][1].toInteger()
+
+                            def failures = matcher[0][2].toInteger()
+
+                            def errors = matcher[0][3].toInteger()
+
+                            def skipped = matcher[0][4].toInteger()
+
+                            def passed = total - failures - errors - skipped
+
+                            // Calculate the passing rate
+
+                            def passingRate = (passed / total) * 100
+
+                            echo "Passed: ${passed}, Failed: ${failures}, Errors: ${errors}, Skipped: ${skipped}, Total: ${total}"
+
+                            echo "Passing Rate: ${passingRate}%"
+
+                            // Store the passing rate as an environment variable for later use
+
+                            env.PASSING_RATE = passingRate
+
+                            // Set the build result based on the pass and fail counts
+
+                            if (failures > 0 || errors > 0) {
+
+                                currentBuild.result = 'UNSTABLE'
+
+                            } else {
+
+                                currentBuild.result = 'SUCCESS'
+
+                            }
+
+                        } else {
+
+                            echo "No test result summary found in the output."
+
+                        }
+
+                    } catch (Exception e) {
+
+                        echo "Error running tests inside Docker container: ${e.message}"
+
+                        currentBuild.result = 'FAILURE'
+
+                        error "Stopping pipeline execution due to test run failure"
+
+                    }
+
+                }
+
+            }
+
+        }
+
+        stage('Publish Allure Reports') {
+
+            steps {
+
+                echo 'Publishing Allure reports...'
+
+                allure includeProperties: false,
+
+                       jdk: '',
+
+                       results: [[path: 'allure-results']]
+
+            }
+
+        }
+
+    }
+
+    post {
+
+        success {
+
+            script {
+
+                def passingRate = env.PASSING_RATE?.toFloat() ?: 0.0
+
+                emailext (
+
+                    to: 'jubearjabberjetu@gmail.com',
+
+                    subject: 'Pipeline Success Notification',
+
+                    body: "The pipeline succeeded with a passing rate of ${passingRate}%."
+
+                )
+
+            }
+
+        }
+
+        unstable {
+
+            script {
+
+                def passingRate = env.PASSING_RATE?.toFloat() ?: 0.0
+
+                emailext (
+
+                    to: 'jubearjabberjetu@gmail.com',
+
+                    subject: 'Pipeline Unstable Notification',
+
+                    body: "The pipeline is unstable with a passing rate of ${passingRate}%. Please check the logs."
+
+                )
+
+            }
+
+        }
+
+        failure {
+
+            script {
+
+                def passingRate = env.PASSING_RATE?.toFloat() ?: 0.0
+
+                emailext (
+
+                    to: 'jubearjabberjetu@gmail.com',
+
+                    subject: 'Pipeline Failure Notification',
+
+                    body: "The pipeline failed with a passing rate of ${passingRate}%. Please check the logs."
+
+                )
+
+            }
+
+        }
+
+    }
+
+}
+```
