@@ -1,11 +1,15 @@
 package utilis;
 
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxBinary;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.Duration;
@@ -13,21 +17,28 @@ import java.util.Properties;
 
 public class TestBase {
 
-    private WebDriver driver;
+    public WebDriver driver;
 
-    public WebDriver webDriverManager() throws IOException, InterruptedException {
+    public WebDriver WebDriverManager() throws IOException, InterruptedException {
         if (driver == null) {
             FileInputStream fis = new FileInputStream(System.getProperty("user.dir") + "/src/test/resources/global.properties");
             Properties prop = new Properties();
             prop.load(fis);
             String url = prop.getProperty("QAUrl");
+            String browser = System.getProperty("browser", prop.getProperty("browser", "chrome"));
 
-            // Set Firefox options
-            System.setProperty("webdriver.gecko.driver", "/usr/local/bin/geckodriver");
-            FirefoxOptions options = new FirefoxOptions();
-            options.setHeadless(true); // Set headless mode for Firefox
+            if (browser.equalsIgnoreCase("firefox")) {
+                String driverPath = System.getProperty("user.dir") + "/src/test/resources/geckodriver";
+                System.setProperty("webdriver.gecko.driver", driverPath);
 
-            driver = new FirefoxDriver(options);
+                FirefoxOptions options = new FirefoxOptions();
+                String firefoxBinaryPath = "/usr/bin/firefox"; // Set the correct Firefox binary path
+                options.setBinary(new FirefoxBinary(new File(firefoxBinaryPath)));
+
+                driver = new FirefoxDriver(options);
+            } else {
+                throw new IllegalArgumentException("Unsupported browser: " + browser);
+            }
 
             assert driver != null;
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));

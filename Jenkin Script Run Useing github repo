@@ -1,0 +1,96 @@
+pipeline {
+    agent any
+    
+    environment {
+        SLACK_CHANNEL = 'C07C89YJY92'  // Your Slack channel ID
+    }
+    
+    tools {
+        maven 'Maven'  // Replace with the name you used in Global Tool Configuration
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Debugging step: Print Git remote URLs'
+                checkout([$class: 'GitSCM',
+                          branches: [[name: 'main']],
+                          userRemoteConfigs: [[url: 'https://github.com/tamim61qups/Web_Test_Automation.git',
+                                               credentialsId: 'e679e005-9505-4158-9bc6-bc051648fd1e']]])
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'chmod 777 src/test/resources/chromedriver_linux'
+                sh 'mvn clean'
+            }
+        }
+        stage('Test') {
+            steps {
+                script {
+                    def startTime = new Date()
+                    def startDateString = startTime.format("yyyy-MM-dd")
+                    def startTimeString = startTime.format("HH:mm:ss")
+                    
+                    echo "Start Date: ${startDateString}"
+                    echo "Start Time: ${startTimeString}"
+                    
+                    def testResults = runTests()
+                    
+                    // Extract test summary information
+                    def totalTests = testResults.totalTests
+                    def failures = testResults.failures
+                    def errors = testResults.errors
+                    def skipped = testResults.skipped
+                    def elapsed = testResults.elapsed
+                    
+                    // Print summary to Jenkins console
+                    echo "Testing Summary:\nTotal Tests: ${totalTests}\nFailures: ${failures}\nErrors: ${errors}\nSkipped: ${skipped}\nElapsed: ${elapsed}"
+                    
+                    // Send Slack notification with summary
+                    slackSend (
+                        channel: "${env.SLACK_CHANNEL}",
+                        color: failures > 0 || errors > 0 ? 'danger' : 'good',
+                        attachments: [
+                            [
+                                fallback: "Testing Summary",
+                                text: "Testing Results:\nStart Date: ${startDateString}\nStart Time: ${startTimeString}\nTotal Tests: ${totalTests}\nFailures: ${failures}\nErrors: ${errors}\nSkipped: ${skipped}\nTime Elapsed: ${elapsed}",
+                            ]
+                        ]
+                    )
+                }
+            }
+        }
+        stage('Generate Allure Report') {
+            steps {
+                allure([
+                    includeProperties: false,
+                    jdk: '',
+                    results: [[path: 'target/allure-results']]
+                ])
+            }
+        }
+    }
+}
+
+def runTests() {
+    def mvnHome = tool 'Maven'
+    def mvnCMD = "${mvnHome}/bin/mvn"
+    
+    def testOutput = sh(
+        script: "${mvnCMD} test",
+        returnStdout: true
+    ).trim()
+    
+    // Parse test results
+    def summary = testOutput =~ /Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: ([\d\.]+ [smh]+) - in TestSuite/
+    
+    
+    def totalTests = summary[0][1] as int
+    def failures = summary[0][2] as int
+    def errors = summary[0][3] as int
+    def skipped = summary[0][4] as int
+    def elapsed = summary[0][5]
+    
+    return [totalTests: totalTests, failures: failures, errors: errors, skipped: skipped, elapsed: elapsed]
+}
