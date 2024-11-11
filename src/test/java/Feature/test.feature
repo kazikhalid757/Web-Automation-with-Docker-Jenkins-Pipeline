@@ -2,11 +2,13 @@ Feature: Verify Brikroy icon work properly
 
   #T1
   @Release
+  @firefox
   Scenario: Verify Bikroy logo work properly
     Given User Click on Bikroy logo
 
 # T2
   @Release
+  @firefox
   Scenario:Verify that All Ads Option show Properly
   Given Check that All Ads Option show Properly
   When  Click that All Ads Option
@@ -14,6 +16,7 @@ Feature: Verify Brikroy icon work properly
 
   # T3
   @Release
+  @firefox
   Scenario: Verify that Chat button show Properly
     Given Check that chat button show Properly
     When  Click that chat button
@@ -22,6 +25,7 @@ Feature: Verify Brikroy icon work properly
 
     # T4
   @Release
+  @firefox
   Scenario:Verify that Login button show Properly
     Given Check that login button show Properly
     When  Click that login button
@@ -31,6 +35,7 @@ Feature: Verify Brikroy icon work properly
 
     # T5
   @Release
+  @firefox
   Scenario:Verify that POST YOUR AD button show Properly
     Given Check that Post your ad button show Properly
     When  Click that Post your ad button
@@ -39,6 +44,7 @@ Feature: Verify Brikroy icon work properly
 
     # T6
   @Release
+  @chrome
   Scenario: Verify that Search bar show Properly
     Given Check that search bar show Properly
     When  Click that search bar
@@ -47,6 +53,7 @@ Feature: Verify Brikroy icon work properly
 
     # T7
   @Release
+  @chrome
   Scenario: Verify that Search option work Properly
     Given Check that search bar show Properly
     When  Click that search bar
@@ -57,6 +64,7 @@ Feature: Verify Brikroy icon work properly
 
     # T8
   @Release
+  @chrome
   Scenario:Verify that Language button show Properly
     Given Check that language button show Properly
     When  Click that language button
@@ -67,6 +75,7 @@ Feature: Verify Brikroy icon work properly
 
     # T9
   @Release
+  @chrome
   Scenario:Verify that Location button show Properly
     Given Check that location button show Properly
     When  Click that location button
@@ -76,6 +85,7 @@ Feature: Verify Brikroy icon work properly
 
    # T10
   @Release
+  @chrome
   Scenario: Product Display
     Given Check Mobiles button is available in Category item section
     When Click on Mobiles button
